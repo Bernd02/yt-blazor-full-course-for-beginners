@@ -1,0 +1,57 @@
+﻿@* enable renderMode per component 
+   ... it's also possible to set the rendermode for the entire app 
+*@
+@rendermode RenderMode.InteractiveServer
+
+@inject GamesClient gamesClient;
+@inject NavigationManager navigationManager;
+
+
+<!-- Modal -->
+<div class="modal fade" id="@GetModelId(this.GameSummary)" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h1 class="modal-title fs-5" id="exampleModalLabel">@this.title</h1>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" data-bs-dismiss="modal" onclick="@this.HandleOnDeleteClickAsync">
+                    Delete
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+@code {
+    [Parameter]
+    public GameSummary? GameSummary { get; set; }
+
+    private string title = string.Empty;
+
+
+    // --------------------------------------------------
+    protected override void OnParametersSet()
+    {
+        this.title = $"Delete {this.GameSummary?.Name}";
+    }
+
+
+    // --------------------------------------------------
+    public static string GetModelId(GameSummary? gameSummary)
+    {
+        ArgumentNullException.ThrowIfNull(gameSummary);
+        return $"deleteModal-{gameSummary.Id}";
+    }
+
+    // --------------------------------------------------
+    private async Task HandleOnDeleteClickAsync()
+    {
+        await this.gamesClient.DeleteGameByIdAsync(this.GameSummary?.Id);
+        this.navigationManager.Refresh();
+    }
+}

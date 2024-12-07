@@ -1,0 +1,143 @@
+﻿@page "/editgame"
+@page "/editgame/{id:int}"
+
+@* enable renderMode per component 
+   ... it's also possible to set the rendermode for the entire app 
+*@
+@rendermode RenderMode.InteractiveServer
+
+@inject NavigationManager navigationManager;
+@inject GamesClient gamesClient;
+@inject GenresClient genresClient;
+
+
+<PageTitle>@this.title</PageTitle>
+
+
+<h3>@this.title</h3>
+
+
+@if (null == genres || null == gameDetails)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <div class="row">
+        <div class="col-md-4">
+            @* EditForm binds date to the internal model *@ 
+            @* OnValidSubmit - uses the validation attributes provided in the data-model*@ 
+            @* ... you also need to add the "DataAnnotationsValidator" tag to make this work*@ 
+            @* ... you provide the validation message tags*@ 
+            @* OnSubmit - does not validate the data-model*@
+            <EditForm Model="@gameDetails" FormName="editGame" OnValidSubmit="HandleSubmitAsync">
+                <DataAnnotationsValidator />
+                <ValidationSummary />
+
+                @* Name *@
+                <div class="mb-3">
+                    <label for="name" class="form-label">Name:</label>
+                    <InputText id="name" class="form-control" @bind-Value="gameDetails.Name" />
+                    @* <ValidationMessage For="() => gameDetails.Name" /> *@ 
+                </div>
+
+                @* GenreId *@
+                <div class="mb-3">
+                    <label for="genre" class="form-label">Genre:</label>
+                    <InputSelect id="genre" class="form-select" @bind-Value="gameDetails.GenreId">
+                        <option value="">--- Select a genre ---</option>
+                        @foreach (var genre in genres)
+                        {
+                            <option value="@genre.Id">@genre.Name</option>
+                        }
+                    </InputSelect>
+                    @* <ValidationMessage For="() => gameDetails.GenreId" /> *@ 
+                </div>
+
+                @* Price *@ 
+                <div class="mb-3">
+                    <label for="price" class="form-label">Price:</label>
+                    <InputNumber id="price" class="form-control" @bind-Value="gameDetails.Price" />
+                    @* <ValidationMessage For="() => gameDetails.Price" /> *@ 
+                </div>
+
+                @* ReleaseDate *@ 
+                <div class="mb-3">
+                    <label for="release-date" class="form-label">Release Date:</label>
+                    <InputDate id="release-date" class="form-control" @bind-Value="gameDetails.ReleaseDate" />
+                </div>
+
+                @* Buttons *@ 
+                <button class="btn btn-primary" type="submit">Save</button>
+                <a class="btn btn-secondary" href="/">Cancel</a>
+            </EditForm>
+        </div>
+    </div>
+}
+
+
+@code {
+    // bind route-parameter to page-model
+    [Parameter]
+    public int? id { get; set; }
+
+    // add this attrubute to provide binding
+    [SupplyParameterFromForm]
+    private GameDetails? gameDetails { get; set; }
+
+    private List<Genre>? genres;
+
+    private string title = string.Empty;
+
+
+    // --------------------------------------------------
+    protected override async Task OnParametersSetAsync()
+    {
+        // return if game is already initialized
+        if (null != this.gameDetails)
+        {
+            return;
+        }
+
+        if (null != this.id)
+        {
+            // edit
+            this.gameDetails = await this.gamesClient.GetGameAsync(this.id.Value);
+            this.title = $"Edit {gameDetails.Name}";
+        }
+        else
+        {
+            // add
+            this.gameDetails = new GameDetails()
+                {
+                    ReleaseDate = DateOnly.FromDateTime(DateTime.UtcNow)
+                };
+
+            this.title = "New Game";
+        }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        base.OnInitialized();
+
+        this.genres = await this.genresClient.GetGenresAsync();
+    }
+
+    // --------------------------------------------------
+    private async Task HandleSubmitAsync()
+    {
+        ArgumentNullException.ThrowIfNull(this.gameDetails);
+
+        if (null == this.id)
+        {
+            await this.gamesClient.AddGameAsync(this.gameDetails);
+        }
+        else
+        {
+            await this.gamesClient.UpdateGameAsync(this.gameDetails);
+        }
+
+        this.navigationManager.NavigateTo("/");
+    }
+}
