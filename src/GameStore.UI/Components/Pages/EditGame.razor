@@ -31,6 +31,12 @@ else
             @* ... you provide the validation message tags*@ 
             @* OnSubmit - does not validate the data-model*@
             <EditForm Model="@gameDetails" FormName="editGame" OnValidSubmit="HandleSubmitAsync">
+
+            @* Use the Enhace flagg to prevent a full page reload when useing SSR.
+                ... Or just use InteractiveServerRendering as set at the top of this file.
+            *@
+            @* <EditForm Model="@gameDetails" FormName="editGame" OnValidSubmit="HandleSubmitAsync" Enhance> *@
+
                 <DataAnnotationsValidator />
                 <ValidationSummary />
 

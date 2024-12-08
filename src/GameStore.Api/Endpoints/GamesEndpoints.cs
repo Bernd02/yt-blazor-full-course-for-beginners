@@ -19,6 +19,9 @@ public static class GamesEndpoints
 		// GET /games
 		gamesGroup.MapGet("/", async (IGameService gameService) =>
 		{
+			// simulate delay
+			await Task.Delay(2000);
+
 			return Results.Ok((await gameService.GetallAsync())
 				.Select(game => game.ToGameSummaryDto()));
 		});
